@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-kr&v(s#%h9o+s+gdp6yd*)n@a4&%83$9p+t%q!rxf0x@3(*c%v')
 
 # 2. DEBUG setting is set based on environment variable (safer for Render)
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'False'
 
 # -------------------
 # Allowed Hosts
@@ -162,7 +162,7 @@ CSRF_COOKIE_NAME = "X-CSRFToken"
 
 # ✅ CSRF FIX: Required to fix 403 Forbidden (CSRF verification failed)
 CSRF_TRUSTED_ORIGINS = [
-    'https://capstone-defended-final.onrender.com',
+    'https://smartsight-admin.onrender.com',
 ]
 
 # If NGROK is set, ensure its HTTPS version is also trusted
