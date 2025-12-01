@@ -1,0 +1,441 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Monitoring Appointments - SmartSight{% endblock %}
+
+{% block content %}
+<style>
+  .main-content {
+    flex-grow: 1;
+    padding: 40px;
+    background-color: #f9fafc;
+    border-radius: 20px;
+    margin: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  h2.page-title {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-weight: 700;
+    font-size: 30px;
+  }
+
+  .search-input-group {
+    width: 320px;
+  }
+
+  .search-input-group .form-control {
+    border-radius: 10px 0 0 10px;
+    border-right: none;
+    background-color: #eef5ff;
+    padding: 10px 12px;
+  }
+
+  .search-input-group .input-group-text {
+    background-color: #1E88E5;
+    color: #fff;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .appointment-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    padding: 15px 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  }
+
+  .date-header {
+    background: linear-gradient(90deg, #e3f2fd, #bbdefb);
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 17px;
+    color: #1565c0;
+    margin-bottom: 10px;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+
+  .table thead th {
+    background-color: #1E88E5;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+  }
+
+  .table tbody tr {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    transition: 0.2s;
+  }
+
+  .table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  }
+
+  .table tbody td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    font-size: 0.95em;
+  }
+
+  .badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85em;
+    display: inline-block;
+    min-width: 90px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .badge-status.pending { background-color: #fff9c4; color: #f57f17; border: 1px solid #f57f17; }
+  .badge-status.scheduled { background-color: #bbdefb; color: #1565c0; border: 1px solid #1565c0; }
+  .badge-status.completed { background-color: #c8e6c9; color: #2e7d32; border: 1px solid #2e7d32; }
+  .badge-status.cancelled { background-color: #ffcdd2; color: #b71c1c; border: 1px solid #b71c1c; cursor: not-allowed; }
+
+  .archive-btn {
+    background-color: #cfe9ff;
+    color: #1565c0;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 1.2em;
+  }
+
+  .archive-btn:hover {
+    background: linear-gradient(135deg, #1e88e5, #42a5f5);
+    color: #fff;
+    transform: scale(1.1);
+  }
+
+  .empty-row {
+    text-align: center;
+    color: #7b7b7b;
+    font-style: italic;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-box {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 30px 25px;
+    width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .modal-box h3 {
+    color: #1565c0;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .modal-box p {
+    margin: 6px 0;
+    color: #333;
+    font-size: 0.95em;
+  }
+
+  .modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .close-modal-btn, .confirm-modal-btn {
+    background-color: #1565c0;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .confirm-modal-btn:hover, .close-modal-btn:hover {
+    background-color: #0d47a1;
+  }
+
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #1565c0;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+  }
+
+  .spinner-text {
+    color: #fff;
+    font-weight: 600;
+    margin-top: 15px;
+    font-size: 1.1em;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="page-title">
+    {% if filter_type == 'with_ai' %}
+      Monitoring AI Screening Appointments
+    {% elif filter_type == 'without_ai' %}
+      Monitoring Standard Appointments
+    {% else %}
+      Monitoring Scheduled Appointments
+    {% endif %}
+  </h2>
+
+  <div class="input-group search-input-group">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search appointments...">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+  </div>
+</div>
+
+{% if grouped_appointments %}
+  {% for date, items in grouped_appointments.items %}
+    <div class="appointment-section">
+      <div class="date-header">{{ date|date:"F d, Y" }}</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Booking For</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+            <th>Email</th>
+            <th>Gender</th>
+            <th>Age</th>
+            
+            {% if filter_type == 'with_ai' %}
+              <th>Preliminary Result</th>
+            {% elif filter_type == 'without_ai' %}
+              <th>Reason</th>
+            {% else %}
+              <th>Reason / Preliminary Result</th>
+            {% endif %}
+            
+            <th>Appointment Time</th>
+            <th>Doctor</th>
+            <th>Status</th>
+            <th>Archive</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for appt in items %}
+            <tr>
+              <td>{{ appt.booking_for }}</td>
+              <td>{{ appt.patient_last_name }}</td>
+              <td>{{ appt.patient_first_name }}</td>
+              <td>{{ appt.patient_email|default:"No email" }}</td>
+              <td>{{ appt.patient_gender }}</td>
+              <td>{{ appt.patient_age }}</td>
+              
+              {% if filter_type == 'with_ai' %}
+                <td>{{ appt.preliminary_result|default:"Pending result" }}</td>
+              {% elif filter_type == 'without_ai' %}
+                <td>{{ appt.reason|default:"None" }}</td>
+              {% else %}
+                <td>
+                  {% if appt.is_ai_screening %}
+                    {{ appt.preliminary_result|default:"Pending result" }}
+                  {% else %}
+                    {{ appt.reason|default:"None" }}
+                  {% endif %}
+                </td>
+              {% endif %}
+              
+              <td>{{ appt.appointment_datetime|date:"g:i A" }}</td>
+              <td>{{ appt.doctor.user.get_full_name }}</td>
+              <td>
+                {% if appt.status != "Cancelled" %}
+                  <select class="status-select badge-status {{ appt.status|lower }}" data-id="{{ appt.id }}">
+                    <option value="Pending" {% if appt.status|lower == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="Scheduled" {% if appt.status|lower == "scheduled" %}selected{% endif %}>Scheduled</option>
+                    <option value="Completed" {% if appt.status|lower == "completed" %}selected{% endif %}>Completed</option>
+                  </select>
+                {% else %}
+                  <span class="badge-status cancelled">{{ appt.status }}</span>
+                {% endif %}
+              </td>
+              <td><button class="archive-btn" data-id="{{ appt.id }}"><i class="bi bi-download"></i></button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="empty-row mt-5">No appointments found.</p>
+{% endif %}
+
+<!-- Modals -->
+<div id="archiveModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Archive Confirmation</h3>
+    <p>Are you sure you want to archive this appointment?</p>
+    <div class="modal-buttons">
+      <button class="confirm-modal-btn" id="confirmArchive">Yes</button>
+      <button class="close-modal-btn" id="cancelArchive">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <div class="spinner-text">Please wait...</div>
+</div>
+
+<div id="messageModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 id="messageTitle"></h3>
+    <p id="messageText"></p>
+    <button class="close-modal-btn" id="closeMessage">OK</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('searchInput').addEventListener('input', function () {
+    let filter = this.value.toLowerCase();
+    document.querySelectorAll('.appointment-section tbody tr').forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+  });
+
+  const archiveModal = document.getElementById('archiveModal');
+  const confirmBtn = document.getElementById('confirmArchive');
+  const cancelBtn = document.getElementById('cancelArchive');
+  const messageModal = document.getElementById('messageModal');
+  const messageTitle = document.getElementById('messageTitle');
+  const messageText = document.getElementById('messageText');
+  const closeMessage = document.getElementById('closeMessage');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  let currentApptId, currentRow;
+
+  document.querySelectorAll('.archive-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      currentApptId = this.dataset.id;
+      currentRow = this.closest('tr');
+      archiveModal.style.display = 'flex';
+    });
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    archiveModal.style.display = 'none';
+    loadingOverlay.style.display = 'flex';
+
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('{% url "archive_appointment" %}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf},
+      body: `id=${currentApptId}`
+    })
+    .then(res => res.json())
+    .then(data => {
+      loadingOverlay.style.display = 'none';
+      messageTitle.textContent = data.success ? 'Archived Successfully' : 'Error';
+      messageText.textContent = data.success ? data.message : data.error;
+      messageModal.style.display = 'flex';
+      if (data.success) currentRow.remove();
+    })
+    .catch(() => {
+      loadingOverlay.style.display = 'none';
+      messageTitle.textContent = 'Error';
+      messageText.textContent = 'An error occurred while archiving.';
+      messageModal.style.display = 'flex';
+    });
+  });
+
+  cancelBtn.addEventListener('click', () => archiveModal.style.display = 'none');
+  closeMessage.addEventListener('click', () => messageModal.style.display = 'none');
+
+  document.querySelectorAll('.status-select').forEach(selectEl => {
+    selectEl.addEventListener('change', function () {
+      const apptId = this.dataset.id;
+      const newStatus = this.value;
+      const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      loadingOverlay.style.display = 'flex';
+      document.querySelector('.spinner-text').textContent = 'Updating status...';
+
+      fetch('{% url "update_status" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf},
+        body: `id=${apptId}&status=${newStatus}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        loadingOverlay.style.display = 'none';
+        if (data.success) {
+          this.className = 'status-select badge-status ' + newStatus.toLowerCase();
+          if (newStatus.toLowerCase() === 'completed') {
+            messageTitle.textContent = 'Status Updated';
+            messageText.textContent = 'Appointment marked as completed.';
+            messageModal.style.display = 'flex';
+          }
+        } else {
+          alert(data.error || 'Failed to update status.');
+        }
+      })
+      .catch(() => {
+        loadingOverlay.style.display = 'none';
+        alert('Error updating status.');
+      });
+    });
+  });
+</script>
+{% endblock %}

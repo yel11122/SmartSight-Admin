@@ -1,0 +1,550 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Manage Doctor Availability - SmartSight{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Container & layout */
+    .doctor-schedule-container {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Doctor Card */
+    .doctor-card {
+        background: linear-gradient(135deg, #f0f8ff, #e6f7ff);
+        border-radius: 20px;
+        padding: 30px 25px;
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        width: 45%;
+        min-width: 350px;
+        flex-grow: 1;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    h2 {
+    color: #434242;
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
+
+    .doctor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .doctor-card h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1E88E5;
+        margin-bottom: 15px;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+    .doctor-card .doctor-name {
+        font-size: 1.15rem;
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    /* Calendar Header */
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        color: #1E88E5;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .calendar-header .nav-arrow {
+        background: linear-gradient(135deg, #1E88E5, #42a5f5);
+        border: none;
+        font-size: 1.5rem;
+        color: #fff;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .calendar-header .nav-arrow:hover {
+        transform: scale(1.1);
+    }
+
+    /* Calendar Grid */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        text-align: center;
+    }
+
+    .calendar-grid .day-name {
+        font-weight: 600;
+        color: #666;
+        padding: 8px 0;
+    }
+
+    .calendar-grid .date-cell {
+        padding: 10px 0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .calendar-grid .date-cell.empty {
+        visibility: hidden;
+    }
+
+    .calendar-grid .date-cell.current-month {
+        background-color: #fff;
+        border: 1px solid #cceeff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-grid .date-cell.selected {
+        background: linear-gradient(135deg, #1E88E5, #42a5f5);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .calendar-grid .date-cell.today {
+        border: 2px solid #ffd700;
+    }
+
+    .calendar-grid .date-cell:hover:not(.empty) {
+        background-color: #e0f2ff;
+        transform: scale(1.05);
+    }
+
+    /* Time Slots */
+    .time-slots-section h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .time-slots-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        min-height: 40px;
+        align-items: center;
+    }
+
+    .time-slots-grid.loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .time-slot-badge {
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.95em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        border: 1px solid transparent;
+    }
+
+    .time-slot-badge.available {
+        background-color: #fff;
+        color: #1E88E5;
+        border: 1px solid #1E88E5;
+    }
+
+    .time-slot-badge.unavailable {
+        background-color: #1E88E5;
+        color: #fff;
+        border: 1px solid #1E88E5;
+    }
+
+    .time-slot-badge.occupied {
+        background-color: #ffc107;
+        color: #fff;
+        border: 1px solid #ffc107;
+    }
+
+    .time-slot-badge:hover {
+        opacity: 0.85;
+        transform: scale(1.05);
+    }
+
+    /* Form container */
+    .form-container {
+        margin-top: 25px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-container button {
+        background: linear-gradient(135deg, #1E88E5, #42a5f5);
+        border: none;
+        color: #fff;
+        padding: 10px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .form-container button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(30, 136, 229, 0.5);
+    }
+
+    /* Message box */
+    .message-box {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        padding: 15px 25px;
+        border-radius: 12px;
+        color: #fff;
+        font-weight: bold;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        transition: all 0.5s ease-in-out;
+        transform: translateX(120%);
+        opacity: 0;
+    }
+
+    .message-box.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .message-box.success {
+        background-color: #28a745;
+    }
+
+    .message-box.error {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Manage Doctor Availability</h2>
+    <div class="input-group search-input-group">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+</div>
+
+<div class="doctor-schedule-container">
+    {% for doctor in doctors %}
+    <div class="doctor-card" data-doctor-id="{{ doctor.id }}">
+        <h3>SCHEDULE</h3>
+        <div class="doctor-name"> {{ doctor.user.get_full_name|default:doctor.user.username }}</div>
+        <div class="calendar-component" data-doctor-id="{{ doctor.id }}"
+            data-doctor-name="{{ doctor.user.get_full_name|default:doctor.user.username }}">
+            <div class="calendar-header">
+                <button class="nav-arrow prev-month"><i class="bi bi-chevron-left"></i></button>
+                <span class="month-year"></span>
+                <button class="nav-arrow next-month"><i class="bi bi-chevron-right"></i></button>
+            </div>
+            <div class="calendar-grid">
+                <span class="day-name">Mon</span><span class="day-name">Tue</span><span class="day-name">Wed</span>
+                <span class="day-name">Thu</span><span class="day-name">Fri</span><span class="day-name">Sat</span>
+                <span class="day-name">Sun</span>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <h4 class="mb-3 text-center">Time Slot Status</h4>
+            <p>Click a slot to toggle its availability.</p>
+            <button class="btn btn-primary" id="save-slots-{{ doctor.id }}">Save All Changes</button>
+        </div>
+
+        <div class="time-slots-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="mb-0">DAILY SLOTS</h4>
+            </div>
+            <div class="time-slots-grid all-slots-{{ doctor.id }}">
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="messageBox" class="message-box"></div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarComponents = document.querySelectorAll('.calendar-component');
+        const messageBox = document.getElementById('messageBox');
+
+        function showMessage(message, isSuccess) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('success', 'error');
+            messageBox.classList.add(isSuccess ? 'success' : 'error', 'show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
+
+        // Function to generate a full day's time slots
+        function generateAllSlots() {
+            const slots = [];
+            const startHour = 10; // Start at 10 AM
+            const endHour = 21;   // End at 9 PM
+            const interval = 60;  // 60 minutes
+
+            for (let hour = startHour; hour <= endHour; hour++) {
+                const date = new Date();
+                date.setHours(hour, 0, 0, 0);
+
+                // Format to "hh:mm AM/PM"
+                const options = { hour: "2-digit", minute: "2-digit", hour12: true };
+                const formatted = date.toLocaleTimeString([], options);
+
+                slots.push(formatted);
+            }
+
+            return slots;
+        }
+
+        
+
+        // Function to fetch and render time slots
+        function fetchAndRenderTimeSlots(doctorId, date) {
+            const allSlotsGrid = document.querySelector(`.all-slots-${doctorId}`);
+
+            if (!date) {
+                allSlotsGrid.innerHTML = '<span class="text-muted">Select a date to view or set availability.</span>';
+                return;
+            }
+
+            allSlotsGrid.innerHTML = '<span class="text-muted">Loading all available slots...</span>';
+
+
+            const fetchUrl = `{% url 'manage_doctors_availability' %}?doctor_id=${doctorId}&date=${date}`;
+
+            fetch(fetchUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    allSlotsGrid.classList.remove('loading');
+                    allSlotsGrid.innerHTML = '';
+
+                    const allPossibleSlots = generateAllSlots();
+                    const { occupied_slots, vacant_slots } = data;
+
+                    // Determine the status of each possible slot
+                    allPossibleSlots.forEach(slotTime => {
+                        const badge = document.createElement('span');
+                        badge.textContent = slotTime;
+                        badge.dataset.time = slotTime;
+                        badge.classList.add('time-slot-badge');
+
+                        if (occupied_slots && occupied_slots.includes(slotTime)) {
+        // Still mark occupied (for booked appointments)
+        badge.classList.add('occupied');
+        badge.dataset.status = 'occupied';
+    } else if (vacant_slots && vacant_slots.includes(slotTime)) {
+        // Optional – can ignore this since all should default to available
+        badge.classList.add('available');
+        badge.dataset.status = 'available';
+    } else {
+        // Default: every time slot starts as available
+        badge.classList.add('available');
+        badge.dataset.status = 'available';
+    }
+
+
+                        // Click listener to toggle status (only for non-occupied slots)
+                        if (badge.dataset.status !== 'occupied') {
+                            badge.addEventListener('click', () => {
+                                const currentStatus = badge.dataset.status;
+                                if (currentStatus === 'available') {
+                                    badge.classList.remove('available');
+                                    badge.classList.add('unavailable');
+                                    badge.dataset.status = 'unavailable';
+                                } else {
+                                    badge.classList.remove('unavailable');
+                                    badge.classList.add('available');
+                                    badge.dataset.status = 'available';
+                                }
+                            });
+                        }
+
+                        allSlotsGrid.appendChild(badge);
+                    });
+                })
+                .catch(error => {
+                    allSlotsGrid.classList.remove('loading');
+                    console.error('Error fetching time slots:', error);
+                    showMessage('Failed to load time slots.', false);
+                });
+        }
+
+        // Function to send the complete list of slots to the backend
+        function saveAllSlots(doctorId) {
+            const selectedDate = document.querySelector(`.calendar-component[data-doctor-id="${doctorId}"] .date-cell.selected`);
+            if (!selectedDate) {
+                showMessage('Please select a date first.', false);
+                return;
+            }
+            const date = selectedDate.dataset.fullDate;
+            const availableSlots = [];
+            const allSlotsGrid = document.querySelector(`.all-slots-${doctorId}`);
+
+            allSlotsGrid.querySelectorAll('.time-slot-badge.available').forEach(badge => {
+                availableSlots.push(badge.dataset.time);
+            });
+
+            const formData = new FormData();
+            formData.append('doctor_id', doctorId);
+            formData.append('date', date);
+            formData.append('time_slots', JSON.stringify(availableSlots));
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch("{% url 'set_doctor_availability' %}", {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage('Availability saved successfully!', true);
+                        fetchAndRenderTimeSlots(doctorId, date); // Refresh slots
+                    } else {
+                        showMessage('Error: ' + data.error, false);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving slots:', error);
+                    showMessage('An error occurred while saving.', false);
+                });
+        }
+
+        calendarComponents.forEach(calendarComp => {
+            const monthYearSpan = calendarComp.querySelector('.month-year');
+            const prevMonthBtn = calendarComp.querySelector('.nav-arrow.prev-month');
+            const nextMonthBtn = calendarComp.querySelector('.nav-arrow.next-month');
+            const calendarGrid = calendarComp.querySelector('.calendar-grid');
+            const doctorId = calendarComp.dataset.doctorId;
+
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
+            let selectedDate = null;
+
+            function renderCalendar(month, year) {
+    const dayNames = calendarGrid.querySelectorAll('.day-name');
+    calendarGrid.innerHTML = '';
+    dayNames.forEach(day => calendarGrid.appendChild(day));
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const numDays = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay();
+
+    monthYearSpan.textContent = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+
+    // Adjust to start week on Monday
+    let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
+
+    // Fill empty cells before the 1st
+    for (let i = 0; i < startOffset; i++) {
+        const emptyCell = document.createElement('span');
+        emptyCell.classList.add('date-cell', 'empty');
+        calendarGrid.appendChild(emptyCell);
+    }
+
+    // ✅ Render all days of the month as selectable
+    for (let day = 1; day <= numDays; day++) {
+        const dateCell = document.createElement('span');
+        dateCell.classList.add('date-cell', 'current-month');
+        dateCell.textContent = day;
+        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        dateCell.dataset.fullDate = formattedDate;
+
+        const today = new Date();
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            dateCell.classList.add('today');
+        }
+
+        // ✅ Allow all dates (past, present, future)
+        dateCell.addEventListener('click', () => {
+            const prevSelected = calendarGrid.querySelector('.date-cell.selected');
+            if (prevSelected) {
+                prevSelected.classList.remove('selected');
+            }
+            dateCell.classList.add('selected');
+            selectedDate = dateCell.dataset.fullDate;
+            fetchAndRenderTimeSlots(doctorId, selectedDate);
+        });
+
+        // highlight selected date if returning to same month
+        if (selectedDate && dateCell.dataset.fullDate === selectedDate) {
+            dateCell.classList.add('selected');
+        }
+
+        calendarGrid.appendChild(dateCell);
+    }
+}
+
+
+            prevMonthBtn.addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;  
+                    currentYear--;
+                }
+                renderCalendar(currentMonth, currentYear);
+                fetchAndRenderTimeSlots(doctorId, null);
+            });
+
+            nextMonthBtn.addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                renderCalendar(currentMonth, currentYear);
+                fetchAndRenderTimeSlots(doctorId, null);
+            });
+
+            renderCalendar(currentMonth, currentYear);
+
+            document.getElementById(`save-slots-${doctorId}`).addEventListener('click', () => {
+                saveAllSlots(doctorId);
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function () {
+            let filter = this.value.toLowerCase();
+            let doctorCards = document.querySelectorAll('.doctor-card');
+            doctorCards.forEach(card => {
+                let text = card.querySelector('.doctor-name').textContent.toLowerCase();
+                card.style.display = text.includes(filter) ? 'flex' : 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+
+ <!-- STOP -->

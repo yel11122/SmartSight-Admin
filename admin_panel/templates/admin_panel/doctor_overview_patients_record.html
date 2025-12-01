@@ -1,0 +1,419 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Doctor Overview / Patients Record - SmartSight{% endblock %}
+
+{% block content %}
+<style>
+    /* Main container styling */
+    .main-content {
+        flex-grow: 1;
+        padding: 40px;
+        background-color: #f9fafc;
+        border-radius: 20px;
+        margin: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .main-content h2 {
+        color: #434242;
+        margin-bottom: 25px;
+        font-weight: 700;
+        font-size: 28px;
+    }
+
+    /* Search container */
+    .search-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .search-input-group {
+        width: 320px;
+        transition: all 0.3s ease;
+    }
+
+    .search-input-group .form-control {
+        border-radius: 10px 0 0 10px;
+        border-right: none;
+        background-color: #e3f2fd;
+        padding: 10px 12px;
+        font-size: 0.95em;
+    }
+
+    .search-input-group .input-group-text {
+        background-color: #e3f2fd;
+        border-radius: 0 10px 10px 0;
+        cursor: pointer;
+        font-size: 1.1em;
+        color: #1E88E5;
+        transition: 0.2s;
+    }
+
+    .search-input-group .input-group-text:hover {
+        background-color: #1E88E5;
+        color: #fff;
+    }
+
+    /* Table styling */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0 12px;
+        width: 100%;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .table thead th {
+        background-color: #1E88E5;
+        color: #fff;
+        padding: 14px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-align: left;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody tr {
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .table tbody td {
+        padding: 14px 16px;
+        vertical-align: middle;
+        border-top: none;
+        border-bottom: none;
+    }
+
+    /* Severity badges */
+    .badge-status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85em;
+        display: inline-block;
+        text-align: center;
+        min-width: 90px;
+        transition: all 0.2s ease;
+    }
+
+    .badge-status.low { background-color: #d9f7be; color: #2e7d32; border: 1px solid #2e7d32; }
+    .badge-status.medium { background-color: #fff4e5; color: #b26a00; border: 1px solid #b26a00; }
+    .badge-status.high { background-color: #ffd6d6; color: #c62828; border: 1px solid #c62828; }
+
+    /* Buttons */
+    .view-details-btn {
+        background-color: #1976d2;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .view-details-btn:hover { background-color: #1565c0; }
+
+    .archive-btn {
+        background-color: #cfe9ff;
+        color: #1565c0;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-size: 1.2em;
+    }
+
+    .archive-btn:hover {
+        background: linear-gradient(135deg, #1e88e5, #42a5f5);
+        color: #fff;
+        transform: scale(1.1);
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-box {
+        background-color: #fff;
+        border-radius: 16px;
+        padding: 30px 25px;
+        width: 420px;
+        max-width: 90%;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+        animation: fadeIn 0.3s ease;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .modal-box h3 {
+        color: #1565c0;
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 1.5em;
+    }
+
+    .modal-box p {
+        margin: 6px 0;
+        font-size: 0.95em;
+        color: #333;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .close-modal-btn, .confirm-modal-btn {
+        background-color: #1565c0;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 20px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .confirm-modal-btn:hover, .close-modal-btn:hover { background-color: #0d47a1; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    /* 🔄 Loading Spinner */
+    #loadingSpinner, #modalLoadingSpinner {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(255,255,255,0.7);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .spinner {
+        border: 6px solid #e0e0e0;
+        border-top: 6px solid #1565c0;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Doctor Overview / Patients Record</h2>
+    <div class="input-group search-input-group">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+</div>
+
+<div id="patientsTable">
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>Last Name</th>
+                <th>First Name</th>
+                <th>Email</th>
+                <th>Age</th>
+                <th>Appointment Date & Time</th>
+                <th>View Details</th>
+                <th>Archive</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in patients %}
+<tr>
+    <td>{{ patient.patient_last_name }}</td>
+    <td>{{ patient.patient_first_name }}</td>
+    <td>{{ patient.patient_email|default:"No email" }}</td>
+    <td>{{ patient.patient_age }}</td>
+    <td>{{ patient.appointment_datetime|date:"F d, Y P" }}</td>
+    <td>
+        <button class="view-details-btn" data-id="{{ patient.id }}">
+            View Details
+        </button>
+    </td>
+    <td>
+        <button class="archive-btn" data-id="{{ patient.id }}">
+            <i class="bi bi-download"></i>
+        </button>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="7" class="text-center">No patient records found.</td>
+</tr>
+{% endfor %}
+
+        </tbody>
+    </table>
+</div>
+
+<!-- 🔄 Global Loading Spinner -->
+<div id="loadingSpinner">
+    <div class="spinner"></div>
+</div>
+
+<!-- Modal Loading Spinner for Details -->
+<div id="modalLoadingSpinner" class="modal-overlay">
+    <div class="spinner"></div>
+</div>
+
+<!-- Patient Details Modal -->
+<div id="detailsModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Patient Details</h3>
+        <div id="modalContent"></div>
+        <button class="close-modal-btn mt-3">OK</button>
+    </div>
+</div>
+
+<!-- Archive Confirmation Modal -->
+<div id="archiveModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Archive Confirmation</h3>
+        <p>Are you sure you want to archive this patient record?</p>
+        <div class="modal-buttons">
+            <button class="confirm-modal-btn" id="confirmArchive">Yes</button>
+            <button class="close-modal-btn" id="cancelArchive">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Success Modal -->
+<div id="messageModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="messageTitle"></h3>
+        <p id="messageText"></p>
+        <button class="close-modal-btn" id="closeMessage">OK</button>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    const modal = document.getElementById('detailsModal');
+    const modalContent = document.getElementById('modalContent');
+    const closeModalBtn = modal.querySelector('.close-modal-btn');
+    const spinner = document.getElementById('loadingSpinner');
+    const modalSpinner = document.getElementById('modalLoadingSpinner');
+
+    // ✅ View Details with Loading Spinner
+    document.querySelectorAll('.view-details-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const patientId = this.dataset.id;
+            modalContent.innerHTML = ''; // Clear previous content
+            modalSpinner.style.display = 'flex'; // Show modal loading spinner
+
+            fetch(`/patient-details/${patientId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    modalSpinner.style.display = 'none';
+                    modalContent.innerHTML = `
+                        <p><strong>Name:</strong> ${data.first_name} ${data.last_name}</p>
+                        <p><strong>Email:</strong> ${data.email || 'No email provided'}</p>
+                        <p><strong>Age:</strong> ${data.age}</p>
+                        <p><strong>Gender:</strong> ${data.gender}</p>
+                        <p><strong>Reason:</strong> ${data.reason}</p>
+                        <p><strong>Booking For:</strong> ${data.booking_for}</p>
+                        <p><strong>Doctor:</strong> ${data.doctor}</p>
+                        <p><strong>Appointment:</strong> ${data.appointment_datetime}</p>
+                        <p><strong>Status:</strong> ${data.status}</p>`;
+                    modal.style.display = 'flex';
+                })
+                .catch(() => {
+                    modalSpinner.style.display = 'none';
+                    alert('Could not fetch patient details.');
+                });
+        });
+    });
+
+    closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+
+    // ✅ Archive logic
+    const archiveModal = document.getElementById('archiveModal');
+    const confirmBtn = document.getElementById('confirmArchive');
+    const cancelBtn = document.getElementById('cancelArchive');
+    const messageModal = document.getElementById('messageModal');
+    const messageTitle = document.getElementById('messageTitle');
+    const messageText = document.getElementById('messageText');
+    const closeMessage = document.getElementById('closeMessage');
+    let currentPatientId, currentRow;
+
+    document.getElementById('patientsTable').addEventListener('click', e => {
+        if (e.target.closest('.archive-btn')) {
+            currentPatientId = e.target.closest('.archive-btn').dataset.id;
+            currentRow = e.target.closest('tr');
+            archiveModal.style.display = 'flex';
+        }
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        archiveModal.style.display = 'none';
+        spinner.style.display = 'flex';
+
+        fetch('{% url "archive_patient" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: `id=${currentPatientId}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            spinner.style.display = 'none';
+            messageTitle.textContent = data.success ? 'Archived Successfully' : 'Error';
+            messageText.textContent = data.success ? data.message : data.error;
+            messageModal.style.display = 'flex';
+            if (data.success) currentRow.remove();
+        })
+        .catch(() => {
+            spinner.style.display = 'none';
+            messageTitle.textContent = 'Error';
+            messageText.textContent = 'An error occurred while archiving.';
+            messageModal.style.display = 'flex';
+        });
+    });
+
+    cancelBtn.addEventListener('click', () => archiveModal.style.display = 'none');
+    closeMessage.addEventListener('click', () => messageModal.style.display = 'none');
+</script>
+{% endblock %}

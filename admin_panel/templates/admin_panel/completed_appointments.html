@@ -1,0 +1,156 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Completed Appointments - SmartSight{% endblock %}
+
+{% block content %}
+<style>
+  .main-content {
+    flex-grow: 1;
+    padding: 40px;
+    background-color: #f9fafc;
+    border-radius: 20px;
+    margin: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+  .main-content h2 {
+    color: #434242;
+    margin-bottom: 25px;
+    font-weight: 700;
+    font-size: 28px;
+  }
+  .search-input-group {
+    width: 320px;
+    transition: all 0.3s ease;
+  }
+  .search-input-group .form-control {
+    border-radius: 10px 0 0 10px;
+    border-right: none;
+    background-color: #e3f2fd;
+    padding: 10px 12px;
+    font-size: 0.95em;
+  }
+  .search-input-group .input-group-text {
+    background-color: #e3f2fd;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    font-size: 1.1em;
+    color: #1E88E5;
+    transition: 0.2s;
+  }
+  .search-input-group .input-group-text:hover {
+    background-color: #1E88E5;
+    color: #fff;
+  }
+  .table {
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .table thead th {
+    background-color: #1E88E5;
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-align: left;
+    letter-spacing: 0.5px;
+  }
+  .table tbody tr {
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .table tbody tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+  .table tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+  .badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85em;
+    display: inline-block;
+    text-align: center;
+    min-width: 90px;
+  }
+  .badge-status.completed { background-color: #cfe9ff; color: #1565c0; border: 1px solid #1565c0; }
+  .empty-row { text-align: center; color: #7b7b7b; font-style: italic; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Completed Appointments</h2>
+  <div class="input-group search-input-group">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+  </div>
+</div>
+
+<div id="completedAppointmentsTable">
+  <table class="table mt-3">
+    <thead>
+      <tr>
+        <th>Booking For</th>
+        <th>Last Name</th>
+        <th>First Name</th>
+        <th>Email</th>
+        <th>Gender</th>
+        <th>Age</th>
+        <th>Reason / Preliminary Result</th> <!-- ✅ UPDATED -->
+        <th>Appointment Date & Time</th>
+        <th>Doctor Assigned</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for appt in appointments %}
+      <tr>
+        <td>{{ appt.booking_for }}</td>
+        <td>{{ appt.patient_last_name }}</td>
+        <td>{{ appt.patient_first_name }}</td>
+        <td>{{ appt.patient_email|default:"No email" }}</td>
+        <td>{{ appt.patient_gender }}</td>
+        <td>{{ appt.patient_age }}</td>
+
+        <!-- ✅ SHOW PRELIMINARY RESULT IF AVAILABLE -->
+        <td>
+          {% if appt.preliminary_result %}
+            <strong style="color:#0d47a1;">{{ appt.preliminary_result }}</strong>
+          {% else %}
+            {{ appt.reason }}
+          {% endif %}
+        </td>
+
+        <td>{{ appt.appointment_datetime|date:"F d, Y g:i A" }}</td>
+        <td>{{ appt.doctor.user.get_full_name }}</td>
+        <td><span class="badge-status completed">{{ appt.status }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="10" class="empty-row">No completed appointments found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('searchInput').addEventListener('input', function () {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll('#completedAppointmentsTable tbody tr');
+
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

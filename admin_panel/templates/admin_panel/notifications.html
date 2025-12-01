@@ -1,0 +1,218 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Notifications - SmartSight{% endblock %}
+
+{% block content %}
+<style>
+  .main-content {
+    flex-grow: 1;
+    padding: 40px;
+    margin: 20px;
+  }
+
+  h2 {
+    color: #434242;
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
+
+  .notifications-card {
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #dee2e6;
+  }
+
+  .notification-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .notification-item.unread {
+    background-color: #e6f7ff;
+  }
+
+  .notification-content strong {
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+  }
+
+  .notification-content span {
+    display: block;
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  .notification-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .notification-time {
+    font-size: 0.75rem;
+    color: #999;
+    background-color: #f0f2f5;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+
+  .mark-read-btn {
+    background-color: #1E88E5;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .mark-read-btn:hover {
+    background-color: #1565c0;
+  }
+
+  .no-notifications {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    padding: 20px 0;
+  }
+
+  .mark-all-btn {
+    background-color: #42a5f5;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .mark-all-btn:hover {
+    background-color: #1e88e5;
+  }
+
+  .notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  /* 👇 See More Button */
+  .see-more-btn {
+    display: block;
+    width: 100%;
+    background-color: #1E88E5;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 0;
+    font-weight: 600;
+    margin-top: 10px;
+    text-align: center;
+    transition: 0.2s;
+  }
+
+  .see-more-btn:hover {
+    background-color: #1565c0;
+  }
+</style>
+
+<div class="main-content">
+  <div class="notifications-header">
+    <h2>Notifications</h2>
+    {% if unread_count > 0 %}
+    <form method="post" action="{% url 'mark_all_notifications_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="mark-all-btn">Mark all as read</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="notifications-card">
+    {% if notifications %}
+    {% for notification in notifications %}
+    <div
+      class="notification-item {% if not notification.is_read %}unread{% endif %}"
+      {% if forloop.counter > 15 %} style="display:none;"{% endif %}
+    >
+      <div class="notification-content">
+        <strong>
+          {% if notification.url %}
+          <a href="{{ notification.url }}" style="text-decoration: none; color: inherit;">
+            {{ notification.title }}
+          </a>
+          {% else %}
+          {{ notification.title }}
+          {% endif %}
+        </strong>
+        <span>{{ notification.message }}</span>
+      </div>
+      <div class="notification-meta">
+        <span class="notification-time">{{ notification.created_at|timesince }} ago</span>
+        {% if not notification.is_read %}
+        <form method="post" action="{% url 'mark_notification_read' notification.id %}">
+          {% csrf_token %}
+          <button type="submit" class="mark-read-btn">Mark as read</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if notifications|length > 15 %}
+    <button id="seeMoreBtn" class="see-more-btn">See more</button>
+    {% endif %}
+    {% else %}
+    <div class="no-notifications">
+      No notifications yet.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // ✅ Gradual "See more" functionality (+10 each click)
+  document.addEventListener('DOMContentLoaded', function () {
+    const seeMoreBtn = document.getElementById('seeMoreBtn');
+    if (seeMoreBtn) {
+      let visibleCount = 15;
+      const step = 10;
+      const notifications = document.querySelectorAll('.notification-item');
+
+      seeMoreBtn.addEventListener('click', function () {
+        let nextCount = visibleCount + step;
+        for (let i = visibleCount; i < nextCount && i < notifications.length; i++) {
+          notifications[i].style.display = 'flex';
+        }
+        visibleCount = nextCount;
+
+        if (visibleCount >= notifications.length) {
+          seeMoreBtn.style.display = 'none';
+        }
+      });
+    }
+  });
+</script>
+{% endblock content %}
+
+
+ <!-- STOP -->

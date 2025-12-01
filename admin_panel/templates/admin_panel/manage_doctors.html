@@ -1,0 +1,166 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Manage Doctors Hub - SmartSight{% endblock %}
+
+{% block content %}
+<style>
+  /* Inheriting general dashboard styles for consistency */
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f4f8;
+  }
+
+  /* Header for the new screen */
+  .screen-header {
+    color: #1565c0;
+    font-weight: 800;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #00b0ff;
+  }
+
+  .screen-lead {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 3rem;
+  }
+
+  /* Doctor Management Button Styling (Action Cards) */
+  .doctor-action-card {
+    background-color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 4rem 2rem;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .doctor-action-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+  }
+
+  .action-icon {
+    width: 100px;
+    height: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+    font-size: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .icon-patient-record {
+    background-color: #fdd835;
+    /* Orange */
+  }
+
+  .icon-availability {
+    background-color: #4caf50;
+    /* Green */
+  }
+
+  .action-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1565c0;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-description {
+    font-size: 1rem;
+    color: #757575;
+    margin-bottom: 2rem;
+  }
+
+  .btn-action {
+    width: 100%;
+    max-width: 300px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 15px 0;
+    border-radius: 12px;
+    margin-top: auto;
+    /* Pushes the button to the bottom */
+  }
+
+  .btn-record {
+    background-color: #fdd835;
+    /* Lighter Orange */
+    border-color: #fdd835;
+    color: white;
+  }
+
+  .btn-record:hover {
+    background-color: #fdd835;
+    border-color: #fdd835;
+  }
+
+  .btn-availability {
+    background-color: #81c784;
+    /* Lighter Green */
+    border-color: #81c784;
+    color: white;
+  }
+
+  .btn-availability:hover {
+    background-color: #43a047;
+    border-color: #43a047;
+  }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
+<h1 class="screen-header"><i class="fas fa-stethoscope me-3"></i> Doctor Management Hub</h1>
+<p class="screen-lead">
+  Select an action to view detailed doctor-related information or manage scheduling logistics.
+</p>
+
+<div class="row g-5 justify-content-center">
+  <div class="col-md-6">
+    <div class="doctor-action-card">
+      <div>
+        <div class="action-icon icon-patient-record">
+          <i class="fas fa-file-medical"></i>
+        </div>
+        <p class="action-title">View Patient Records</p>
+        <p class="action-description">
+          Access patient data, screening results, and medical history associated with each doctor.
+        </p>
+      </div>
+      <a href="{% url 'doctor_overview_patients_record' %}" class="btn btn-action btn-record mx-auto">
+        <i class="fas fa-search me-2"></i> View Records
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="doctor-action-card">
+      <div>
+        <div class="action-icon icon-availability">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <p class="action-title">Manage Availability</p>
+        <p class="action-description">
+          Modify doctor schedules, set off-days, and manage overall working hours.
+        </p>
+      </div>
+      <a href="{% url 'manage_doctors_availability' %}" class="btn btn-action btn-availability mx-auto">
+        <i class="fas fa-clock me-2"></i> Edit Availability
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+

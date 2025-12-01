@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h3 class="text-center mb-4 fw-bold text-primary">Archived Records</h3>
+    
+    <div class="d-flex justify-content-between mb-3">
+        <input type="text" class="form-control w-50" placeholder="Search archived records...">
+        <button class="btn btn-secondary">Filter</button>
+    </div>
+
+    <table class="table table-hover table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Patient Name</th>
+                <th>Doctor</th>
+                <th>Date Archived</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in archived_records %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ record.patient_name }}</td>
+                <td>{{ record.doctor_name }}</td>
+                <td>{{ record.archived_date }}</td>
+                <td>{{ record.reason }}</td>
+                <td><span class="badge bg-secondary">Archived</span></td>
+                <td>
+                    <button class="btn btn-success btn-sm">Restore</button>
+                    <button class="btn btn-danger btn-sm">Delete</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center">No archived records found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock %}
+
+ <!-- STOP -->
